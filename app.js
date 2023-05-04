@@ -7,19 +7,20 @@ const port = 3000
 app.use(cors())
 app.use(express.json())
 
-app.get("/",(req, res) => res.send("hello world"))
+app.get("/",(req, res) => res.send({texto: "hello world"}))
 
 app.post("/sign-up",(req, res) => {
     const user = req.body
+    console.log(req)
     fs.readFile("db.json", (error, answer) => {
         const db = JSON.parse(answer)
         if (checkIfExists(db, user)) {
           res.status(400);
-          res.send("Usuário já cadastrado")
+          res.send({message: "Usuário já cadastrado"})
         } else {
           db.push(user);
           fs.writeFile("db.json", JSON.stringify(db) ,(err, ans) => {
-              res.send("Usuário cadastrado com sucesso")
+              res.send({message: "Usuário cadastrado com sucesso"})
           })
         }
     })
