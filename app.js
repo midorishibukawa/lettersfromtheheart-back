@@ -15,11 +15,11 @@ app.post("/sign-up",(req, res) => {
         const db = JSON.parse(answer)
         if (checkIfExists(db, user)) {
           res.status(400);
-          res.send("Usuário já cadastrado")
+          res.send({msg:"Usuário já cadastrado"})
         } else {
           db.push(user);
           fs.writeFile("db.json", JSON.stringify(db) ,(err, ans) => {
-              res.send("Usuário cadastrado com sucesso")
+              res.send({msg:"Usuário cadastrado com sucesso"})
           })
         }
     })
@@ -27,6 +27,7 @@ app.post("/sign-up",(req, res) => {
 
 app.post("/sign-in", (req, res) => {
   const user = req.body
+  console.log(user)
   // fs.readFile("db.json", (error, answer) => {
   //   console.log("assíncrono")
   //   const db = JSON.parse(answer)
@@ -43,18 +44,18 @@ app.post("/sign-in", (req, res) => {
 
   // })
   // console.log("sincrono")
-    const buffer = fs.readFileSync("db.json", "utf8")
-    console.log("1")
-    const db = JSON.parse(buffer)
+  const buffer = fs.readFileSync("db.json", "utf8")
+  console.log(buffer)
+  const db = JSON.parse(buffer)
     const userDB = checkIfEmailExist(db, user.email)
     if (!userDB) {
       res.status(404);
-      res.send("Usuário não cadastrado")
+      res.send({msg:"Usuário não cadastrado"})
     } else if (user.password !== userDB.password) {
       res.status(400);
-      res.send("Senha incorreta")
+      res.send({msg:"Senha incorreta"})
     } else {
-      res.send("Login aprovado")
+      res.send({msg:"Login aprovado"})
     }
     console.log("2")
 })
