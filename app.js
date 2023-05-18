@@ -1,6 +1,7 @@
 import express from "express"
 import cors from "cors"
 import fs from "fs"
+import { v4 as uuid } from "uuid"
 
 const app = express()
 const port = 3000
@@ -9,17 +10,47 @@ app.use(express.json())
 
 app.get("/",(req, res) => res.send({texto: "hello world"}))
 
+app.post("/letter",(req, res) => {
+  const letter = req.body
+  fs.readFile("letters.db.json", (error, answer) => {
+    const letters = error ? {} : JSON.parse(answer)
+    const id = uuid()
+    letters[id] = letter
+          fs.writeFile("letters.db.json", JSON.stringify(letters) ,(err, ans) => {
+              res.send({msg:"Carta enviada com sucesso!"})
+          })
+  })
+})
+
+app.get("/letter",(req, res) => {
+  const id = req.body.id
+  fs.readFile("letters.db.json", (error, answer) => {
+    if (error) {
+    res.status(500);
+    res.send({msg:"Sistema temporariamente indisponível"})
+    return
+    } 
+    const db = JSON.parse(answer)
+    const letter = db[id]
+    if (!letter) {
+    res.status(404);
+    res.send({msg:"Carta não encontrada"})
+    return
+    } res.send(letter)
+  })
+})
+
 app.post("/sign-up",(req, res) => {
     const user = req.body
     console.log(req)
-    fs.readFile("db.json", (error, answer) => {
-        const db = JSON.parse(answer)
+    fs.readFile("users.db.json", (error, answer) => {
+        const db = error ? [] : JSON.parse(answer)
         if (checkIfExists(db, user)) {
           res.status(400);
           res.send({msg:"Usuário já cadastrado"})
         } else {
           db.push(user);
-          fs.writeFile("db.json", JSON.stringify(db) ,(err, ans) => {
+          fs.writeFile("users.db.json", JSON.stringify(db) ,(err, ans) => {
               res.send({msg:"Usuário cadastrado com sucesso"})
           })
         }
@@ -45,7 +76,7 @@ app.post("/sign-in", (req, res) => {
 
   // })
   // console.log("sincrono")
-  const buffer = fs.readFileSync("db.json", "utf8")
+  const buffer = fs.readFileSync("users.db.json", "utf8")
   console.log(buffer)
   const db = JSON.parse(buffer)
     const userDB = checkIfEmailExist(db, user.email)
