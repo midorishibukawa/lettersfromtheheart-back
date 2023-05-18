@@ -7,10 +7,11 @@ const port = 3000
 app.use(cors())
 app.use(express.json())
 
-app.get("/",(req, res) => res.send("hello world"))
+app.get("/",(req, res) => res.send({texto: "hello world"}))
 
 app.post("/sign-up",(req, res) => {
     const user = req.body
+    console.log(req)
     fs.readFile("db.json", (error, answer) => {
         const db = JSON.parse(answer)
         if (checkIfExists(db, user)) {
