@@ -17,13 +17,13 @@ app.post("/letter",(req, res) => {
     const id = uuid()
     letters[id] = letter
           fs.writeFile("letters.db.json", JSON.stringify(letters) ,(err, ans) => {
-              res.send({msg:"Carta enviada com sucesso!"})
+              res.send({msg:"Carta enviada com sucesso!", id})
           })
   })
 })
 
 app.get("/letter",(req, res) => {
-  const id = req.body.id
+  const id = req.query.id
   fs.readFile("letters.db.json", (error, answer) => {
     if (error) {
     res.status(500);
