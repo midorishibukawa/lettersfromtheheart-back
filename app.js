@@ -12,6 +12,13 @@ app.get("/",(req, res) => res.send({texto: "hello world"}))
 
 app.post("/letter",(req, res) => {
   const letter = req.body
+  const buffer = fs.readFileSync("users.db.json", "utf8")
+  const db = JSON.parse(buffer)
+    const userDB = checkIfEmailExist(db, letter.from)
+    if (!userDB) {
+      res.status(400);
+      res.send({msg: "Usuário não encontrado"})
+    }
   fs.readFile("letters.db.json", (error, answer) => {
     const letters = error ? {} : JSON.parse(answer)
     const id = uuid()
