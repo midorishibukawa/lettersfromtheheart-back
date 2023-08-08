@@ -11,7 +11,39 @@ const db = pgPromise()("postgres://postgres:postgres@localhost:5432/postgres");
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => res.send({ texto: "hello world" }));
+app.get("/", (req, res) => res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="http://localhost:5501/src/styles/frontpage.css">
+    <title>lettersfromtheheart</title>
+</head>
+<body class="frontpage__wrapper">
+    <section class="frontpage__info">
+            <div class="frontpage__text--wrapper">
+
+                <h1 class="frontpage__title">letters from the heart</h1>
+                <h2 class="frontpage__subtitle">exchange online letters all around the world</h2>
+                <p class="frontpage__text">open up your heart and match with people whose heart match with yours</p>
+            </div>
+            <div>
+                <button>
+                    <a href="./login.html" class="frontpage__button">log in</a>
+                </button>
+                <button>
+                    <a href="./signup.html" class="frontpage__button">sign up</a>
+                </button>
+            </div>
+    </section>
+    <section class="frontpage__picture--container">
+        <div>
+            <img src="./src/assets/lettersfrontpage.jpg" alt="blank letter" class="frontpage__image">
+        </div>
+    </section>
+</body>
+</html>`));
 
 app.post("/letter", (req, res) => {
   const letter = req.body;
@@ -53,6 +85,7 @@ app.get("/letter", (req, res) => {
 
 app.post("/sign-up", async (req, res) => {
   const user = req.body;
+  console.log(user)
   try {
     await db.none(
       'insert into public.users (username, email, "password") values (${user}, ${email}, ${password});',
@@ -66,39 +99,24 @@ app.post("/sign-up", async (req, res) => {
   }
 });
 
-app.post("/sign-in", (req, res) => {
+app.post("/sign-in", async (req, res) => {
   const user = req.body;
-  console.log(user);
-  // fs.readFile("db.json", (error, answer) => {
-  //   console.log("assíncrono")
-  //   const db = JSON.parse(answer)
-  //   const userDB = checkIfEmailExist(db, user.email)
-  //   if (!userDB) {
-  //     res.status(404);
-  //     res.send("Usuário não cadastrado")
-  //   } else if (user.password !== userDB.password) {
-  //     res.status(400);
-  //     res.send("Senha incorreta")
-  //   } else {
-  //     res.send("Login aprovado")
-  //   }
-
-  // })
-  // console.log("sincrono")
-  const buffer = fs.readFileSync("users.db.json", "utf8");
-  console.log(buffer);
-  const db = JSON.parse(buffer);
-  const userDB = checkIfEmailExist(db, user.email);
-  if (!userDB) {
-    res.status(404);
-    res.send({ msg: "Usuário não cadastrado" });
-  } else if (user.password !== userDB.password) {
-    res.status(400);
-    res.send({ msg: "Senha incorreta" });
-  } else {
-    res.send({ msg: "Login aprovado" });
+  try {
+    const userDB = await db.oneOrNone('select * from public.users where email = ${email} and password = ${password}', user)
+    if (!userDB) {
+      res.status(404);
+      res.send({ msg: "Usuário não cadastrado" });
+    } else if (user.password !== userDB.password) {
+      res.status(400);
+      res.send({ msg: "Senha incorreta" });
+    } else {
+      res.send({ msg: "Login aprovado" });
+    }
+  } catch (e) {
+    res.status(500);
+    res.send({ msg: "Serviço temporariamente indisponível"})
   }
-  console.log("2");
+
 });
 
 app.listen(port, () => console.log("funcionou"));
