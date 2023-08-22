@@ -7,61 +7,43 @@ import e from "express";
 
 const app = express();
 const port = 3000;
-const db = pgPromise()("postgres://postgres:postgres@localhost:5432/postgres");
+const db = pgPromise()("postgres://postgres:postgres@localhost:5432/lettersfromtheheart");
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => res.send(`<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="http://localhost:5501/src/styles/frontpage.css">
-    <title>lettersfromtheheart</title>
-</head>
-<body class="frontpage__wrapper">
-    <section class="frontpage__info">
-            <div class="frontpage__text--wrapper">
+// app.post("/letter", (req, res) => {
+//   const letter = req.body;
+//   const buffer = fs.readFileSync("users.db.json", "utf8");
+//   const db = JSON.parse(buffer);
+//   const userDB = checkIfEmailExist(db, letter.from);
+//   if (!userDB) {
+//     res.status(400);
+//     res.send({ msg: "Usuário não encontrado" });
+//   }
+//   fs.readFile("letters.db.json", (error, answer) => {
+//     const letters = error ? {} : JSON.parse(answer);
+//     const id = uuid();
+//     letters[id] = letter;
+//     fs.writeFile("letters.db.json", JSON.stringify(letters), (err, ans) => {
+//       res.send({ msg: "Carta enviada com sucesso!", id });
+//     });
+//   });
+// });
 
-                <h1 class="frontpage__title">letters from the heart</h1>
-                <h2 class="frontpage__subtitle">exchange online letters all around the world</h2>
-                <p class="frontpage__text">open up your heart and match with people whose heart match with yours</p>
-            </div>
-            <div>
-                <button>
-                    <a href="./login.html" class="frontpage__button">log in</a>
-                </button>
-                <button>
-                    <a href="./signup.html" class="frontpage__button">sign up</a>
-                </button>
-            </div>
-    </section>
-    <section class="frontpage__picture--container">
-        <div>
-            <img src="./src/assets/lettersfrontpage.jpg" alt="blank letter" class="frontpage__image">
-        </div>
-    </section>
-</body>
-</html>`));
-
-app.post("/letter", (req, res) => {
+app.post("/letter", async (req, res) => {
   const letter = req.body;
-  const buffer = fs.readFileSync("users.db.json", "utf8");
-  const db = JSON.parse(buffer);
-  const userDB = checkIfEmailExist(db, letter.from);
-  if (!userDB) {
-    res.status(400);
-    res.send({ msg: "Usuário não encontrado" });
+  console.log(letter);
+  try {
+    const query = letter.reply_to
+      ? "insert into public.letters (from_user, text, reply_to) values (${from_user}, ${text}, ${reply_to});"
+      : "insert into public.letters (from_user, text) values (${from_user}, ${text});";
+    await db.none(query, letter);
+    res.send({ msg: "Carta enviada com sucesso" });
+  } catch (e) {
+    console.log(e);
+    res.status(418);
+    res.send({ msg: "I'm a teapot" });
   }
-  fs.readFile("letters.db.json", (error, answer) => {
-    const letters = error ? {} : JSON.parse(answer);
-    const id = uuid();
-    letters[id] = letter;
-    fs.writeFile("letters.db.json", JSON.stringify(letters), (err, ans) => {
-      res.send({ msg: "Carta enviada com sucesso!", id });
-    });
-  });
 });
 
 app.get("/letter", (req, res) => {
@@ -85,7 +67,7 @@ app.get("/letter", (req, res) => {
 
 app.post("/sign-up", async (req, res) => {
   const user = req.body;
-  console.log(user)
+  console.log(user);
   try {
     await db.none(
       'insert into public.users (username, email, "password") values (${user}, ${email}, ${password});',
@@ -93,7 +75,7 @@ app.post("/sign-up", async (req, res) => {
     );
     res.send({ msg: "Usuário cadastrado com sucesso" });
   } catch (e) {
-    console.log(e)
+    console.log(e);
     res.status(400);
     res.send({ msg: "Usuário já cadastrado" });
   }
@@ -102,7 +84,10 @@ app.post("/sign-up", async (req, res) => {
 app.post("/sign-in", async (req, res) => {
   const user = req.body;
   try {
-    const userDB = await db.oneOrNone('select * from public.users where email = ${email} and password = ${password}', user)
+    const userDB = await db.oneOrNone(
+      "select * from public.users where email = ${email} and password = ${password}",
+      user
+    );
     if (!userDB) {
       res.status(404);
       res.send({ msg: "Usuário não cadastrado" });
@@ -114,9 +99,8 @@ app.post("/sign-in", async (req, res) => {
     }
   } catch (e) {
     res.status(500);
-    res.send({ msg: "Serviço temporariamente indisponível"})
+    res.send({ msg: "Serviço temporariamente indisponível" });
   }
-
 });
 
 app.listen(port, () => console.log("funcionou"));
