@@ -5,9 +5,21 @@ import { v4 as uuid } from "uuid";
 import pgPromise from "pg-promise";
 import e from "express";
 
+const getLetters = async (id) => {
+  try {
+    if (id) {
+    return await db.manyOrNone("select * from public.letters where id = $1", id)
+    }
+    return await db.manyOrNone("select * from public.letters where reply_to is null")
+  } catch (e) {
+    console.log(e);
+    return null
+  }
+}
+
 const app = express();
 const port = 3000;
-const db = pgPromise()("postgres://postgres:postgres@localhost:5432/lettersfromtheheart");
+const db = pgPromise()("postgres://postgres:postgres@localhost:5432/postgres");
 app.use(cors());
 app.use(express.json());
 
@@ -46,23 +58,32 @@ app.post("/letter", async (req, res) => {
   }
 });
 
-app.get("/letter", (req, res) => {
+app.get("/letter", async (req, res) => {
   const id = req.query.id;
-  fs.readFile("letters.db.json", (error, answer) => {
-    if (error) {
-      res.status(500);
-      res.send({ msg: "Sistema temporariamente indisponível" });
-      return;
-    }
-    const db = JSON.parse(answer);
-    const letter = db[id];
-    if (!letter) {
-      res.status(404);
-      res.send({ msg: "Carta não encontrada" });
-      return;
-    }
-    res.send(letter);
-  });
+  const letters = await getLetters(id);
+  if (letters === null) {
+  res.status(400);
+  res.send({ msg: "Ocorreu um erro ao consultar a carta"})
+  return
+}
+  if (letters.length == 0) {
+  res.status(404);
+  res.send({ msg: "Nenhuma carta encontrada"});
+  return
+  } 
+  res.send(letters)
+});
+
+app.get("/letter/replies", async (req, res) => {
+  const id = req.query.id;
+  try {
+    const letters = await db.manyOrNone("select * from public.letters where reply_to = $1", id)
+    res.send(letters)
+  } catch (e) {
+    console.log(e);
+    res.status(400);
+    res.send({ msg: "Erro na consulta de carta."})
+  }
 });
 
 app.post("/sign-up", async (req, res) => {
