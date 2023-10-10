@@ -1,21 +1,25 @@
 import express from "express";
 import cors from "cors";
 import fs from "fs";
-import { v4 as uuid } from "uuid";
 import pgPromise from "pg-promise";
 import e from "express";
 
 const getLetters = async (id) => {
   try {
     if (id) {
-    return await db.manyOrNone("select * from public.letters where id = $1", id)
+      return await db.manyOrNone(
+        "select * from public.letters where id = $1",
+        id
+      );
     }
-    return await db.manyOrNone("select * from public.letters where reply_to is null")
+    return await db.manyOrNone(
+      "select * from public.letters where reply_to is null"
+    );
   } catch (e) {
     console.log(e);
-    return null
+    return null;
   }
-}
+};
 
 const app = express();
 const port = 3000;
@@ -62,27 +66,30 @@ app.get("/letter", async (req, res) => {
   const id = req.query.id;
   const letters = await getLetters(id);
   if (letters === null) {
-  res.status(400);
-  res.send({ msg: "Ocorreu um erro ao consultar a carta"})
-  return
-}
+    res.status(400);
+    res.send({ msg: "Ocorreu um erro ao consultar a carta" });
+    return;
+  }
   if (letters.length == 0) {
-  res.status(404);
-  res.send({ msg: "Nenhuma carta encontrada"});
-  return
-  } 
-  res.send(letters)
+    res.status(404);
+    res.send({ msg: "Nenhuma carta encontrada" });
+    return;
+  }
+  res.send(letters);
 });
 
 app.get("/letter/replies", async (req, res) => {
   const id = req.query.id;
   try {
-    const letters = await db.manyOrNone("select * from public.letters where reply_to = $1", id)
-    res.send(letters)
+    const letters = await db.manyOrNone(
+      "select * from public.letters where reply_to = $1",
+      id
+    );
+    res.send(letters);
   } catch (e) {
     console.log(e);
     res.status(400);
-    res.send({ msg: "Erro na consulta de carta."})
+    res.send({ msg: "Erro na consulta de carta." });
   }
 });
 
