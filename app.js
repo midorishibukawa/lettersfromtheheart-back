@@ -8,7 +8,7 @@ import e from "express";
 const getLetters = async (id) => {
   try {
     if (id) {
-    return await db.manyOrNone("SELECT * FROM public.letters LEFT JOIN public.users ON public.letters.id = public.users.id WHERE public.letters.id = $1", id)
+    return await db.manyOrNone("SELECT  l.id, u.username as from_user, l.reply_to, l.text FROM public.letters l LEFT JOIN public.users u ON l.from_user = u.id WHERE l.id = $1", id)
     // return await db.manyOrNone("select * from public.letters where id = $1", id)
     }
     return await db.manyOrNone("select * from public.letters where reply_to is null")
