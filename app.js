@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import fs from "fs";
-import { v4 as uuid } from "uuid";
 import pgPromise from "pg-promise";
 import e from "express";
 
@@ -50,7 +49,7 @@ app.post("/letter", async (req, res) => {
     const query = letter.reply_to
       ? "insert into public.letters (from_user, text, reply_to) values (${from_user}, ${text}, ${reply_to}) returning id;"
       : "insert into public.letters (from_user, text) values (${from_user}, ${text}) returning id;";
-    const id = await db.one(query, letter, exemplo);
+    const id = await db.one(query, letter, l => l.id);
     res.send({ msg: "Carta enviada com sucesso", id});
   } catch (e) {
     console.log(e);
@@ -59,22 +58,18 @@ app.post("/letter", async (req, res) => {
   }
 });
 
-function exemplo(l) {
-  return l.id
-}
-
 app.get("/letter", async (req, res) => {
   const id = req.query.id;
   const letters = await getLetters(id);
   if (letters === null) {
-  res.status(400);
-  res.send({ msg: "Ocorreu um erro ao consultar a carta"})
-  return
-}
+    res.status(400);
+    res.send({ msg: "Ocorreu um erro ao consultar a carta"})
+    return
+  }
   if (letters.length == 0) {
-  res.status(404);
-  res.send({ msg: "Nenhuma carta encontrada"});
-  return
+    res.status(404);
+    res.send({ msg: "Nenhuma carta encontrada"});
+    return
   } 
   res.send(letters)
 });
