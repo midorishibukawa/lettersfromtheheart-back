@@ -8,7 +8,7 @@ const getLetters = async (id) => {
   try {
     if (id) {
       return await db.manyOrNone(
-        "SELECT  l.id, u.username as from_user, l.reply_to, l.text FROM public.letters l LEFT JOIN public.users u ON l.from_user = u.id WHERE l.id = $1",
+        "SELECT  l.id, u.username as from_user, l.reply_to, l.text, l.creation_date FROM public.letters l LEFT JOIN public.users u ON l.from_user = u.id WHERE l.id = $1",
         id
       );
       // return await db.manyOrNone("select * from public.letters where id = $1", id)
@@ -52,8 +52,8 @@ app.post("/letter", async (req, res) => {
   console.log(letter);
   try {
     const query = letter.reply_to
-      ? "insert into public.letters (from_user, text, reply_to) values (${from_user}, ${text}, ${reply_to}) returning id;"
-      : "insert into public.letters (from_user, text) values (${from_user}, ${text}) returning id;";
+    ? "INSERT INTO public.letters (from_user, text, reply_to, creation_date) VALUES (${from_user}, ${text}, ${reply_to}, ${creation_date}) RETURNING id;"
+    : "INSERT INTO public.letters (from_user, text, creation_date) VALUES (${from_user}, ${text}, ${creation_date}) RETURNING id;";
     const id = await db.one(query, letter, (l) => l.id);
     res.send({ msg: "Carta enviada com sucesso", id });
   } catch (e) {
