@@ -14,5 +14,22 @@ references public.users (id),
 text TEXT NOT NULL,
 reply_to INTEGER 
 constraint fk_reply_to
-references public.letters (id)
+references public.letters (id),
+creation_date TIMESTAMPTZ
 );
+
+CREATE OR REPLACE FUNCTION set_creation_date()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.creation_date IS NULL then
+    	SET TIME ZONE 'America/Sao_Paulo';
+        NEW.creation_date = current_timestamp;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER set_creation_date_trigger
+BEFORE INSERT ON public.letters
+FOR EACH ROW
+EXECUTE FUNCTION set_creation_date();
